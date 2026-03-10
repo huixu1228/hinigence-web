@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hinigence | Bento Grid</title>
+    <style>
+        :root { --bg: #050505; --card-bg: rgba(20, 20, 20, 0.6); --text-main: #ededed; --text-muted: #a1a1aa; --border: rgba(255,255,255,0.08); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg); color: var(--text-main); overflow-x: hidden; line-height: 1.6; }
+
+        /* 底层流体光效背景 */
+        .ambient-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; overflow: hidden; background: var(--bg); }
+        .glow-1, .glow-2 { position: absolute; width: 60vw; height: 60vw; border-radius: 50%; filter: blur(120px); opacity: 0.15; animation: float 15s infinite alternate ease-in-out; }
+        .glow-1 { background: #3b82f6; top: -10%; left: -10%; }
+        .glow-2 { background: #8b5cf6; bottom: -10%; right: -10%; animation-delay: -5s; }
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(10%, 10%) scale(1.1); } }
+
+        /* 导航栏 */
+        nav { padding: 20px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); backdrop-filter: blur(20px); position: sticky; top: 0; z-index: 100; }
+        .logo { font-weight: 800; font-size: 1.2rem; }
+        .btn, .lang-switch { background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 0.9rem; margin-left: 10px; }
+        .btn:hover, .lang-switch:hover { background: rgba(255,255,255,0.1); }
+
+        /* 首屏 & 标题 */
+        section { padding: 100px 5%; max-width: 1200px; margin: 0 auto; text-align: center; }
+        h1 { font-size: clamp(3rem, 6vw, 5rem); font-weight: 800; letter-spacing: -1px; line-height: 1.1; margin-bottom: 20px; background: linear-gradient(180deg, #fff 0%, #a1a1aa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { color: var(--text-muted); font-size: 1.2rem; max-width: 600px; margin: 0 auto 60px; }
+
+        /* Bento Grid 便当盒排版 */
+        .bento-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: left; }
+        .bento-card.large { grid-column: span 2; }
+        
+        /* 核心：探照灯卡片特效 */
+        .bento-card { position: relative; background: var(--card-bg); border-radius: 24px; padding: 40px; border: 1px solid var(--border); overflow: hidden; backdrop-filter: blur(20px); }
+        .bento-card::before, .bento-card::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        /* 内发光 */
+        .bento-card::before { background: radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.04), transparent 40%); z-index: 1; }
+        /* 边框高亮流光 */
+        .bento-card::after { background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(139, 92, 246, 0.4), transparent 40%); z-index: -1; }
+        .bento-card:hover::before, .bento-card:hover::after { opacity: 1; }
+        
+        /* 避免内发光覆盖文字 */
+        .bento-content { position: relative; z-index: 2; }
+        .icon { font-size: 2rem; margin-bottom: 20px; display: inline-block; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; }
+        .bento-card h3 { font-size: 1.5rem; margin-bottom: 10px; color: #fff; }
+        .bento-card p { color: var(--text-muted); font-size: 0.95rem; }
+
+        @media (max-width: 900px) { .bento-grid { grid-template-columns: 1fr; } .bento-card.large { grid-column: span 1; } }
+    </style>
+</head>
+<body>
+    <div class="ambient-bg"><div class="glow-1"></div><div class="glow-2"></div></div>
+
+    <nav>
+        <div class="logo">hinigence</div>
+        <div>
+            <button class="lang-switch" onclick="toggleLanguage()">🌐 中 / EN</button>
+        </div>
+    </nav>
+
+    <section>
+        <h1 data-i18n="hero_title">Empowering Business.<br>Powered by LLMs.</h1>
+        <p class="subtitle" data-i18n="hero_desc">Pioneering the integration of Large Language Models into commercial applications.</p>
+        
+        <div class="bento-grid" id="bento-container">
+            <div class="bento-card large">
+                <div class="bento-content">
+                    <div class="icon">📱</div>
+                    <h3 data-i18n="exp_ml">App & Mini-Program Development</h3>
+                    <p data-i18n="exp_ml_desc">Commercial-grade mobile apps and WeChat mini-programs seamlessly integrated with LLM capabilities for intelligent conversational user experiences.</p>
+                </div>
+            </div>
+            <div class="bento-card">
+                <div class="bento-content">
+                    <div class="icon">⚙️</div>
+                    <h3 data-i18n="exp_nlp">Gen-AI Engines</h3>
+                    <p data-i18n="exp_nlp_desc">Custom packaged text-to-content engines tailored to your domain data.</p>
+                </div>
+            </div>
+            <div class="bento-card large">
+                <div class="bento-content">
+                    <div class="icon">🏢</div>
+                    <h3 data-i18n="exp_cv">Enterprise Solutions</h3>
+                    <p data-i18n="exp_cv_desc">End-to-end custom development for complex enterprise requirements, transforming internal processes with highly secure private AI models.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // 探照灯跟随算法 (核心高级交互)
+        document.getElementById('bento-container').addEventListener('mousemove', e => {
+            for(const card of document.querySelectorAll('.bento-card')) {
+                const rect = card.getBoundingClientRect(),
+                      x = e.clientX - rect.left,
+                      y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            }
+        });
+
+        // i18n 双语字典
+        const translations = {
+            en: {
+                hero_title: "Empowering Business.<br>Powered by LLMs.", hero_desc: "Pioneering the integration of Large Language Models into commercial applications.",
+                exp_ml: "App & Mini-Program Development", exp_ml_desc: "Commercial-grade mobile apps and WeChat mini-programs seamlessly integrated with LLM capabilities for intelligent conversational user experiences.",
+                exp_nlp: "Gen-AI Engines", exp_nlp_desc: "Custom packaged text-to-content engines tailored to your domain data.",
+                exp_cv: "Enterprise Solutions", exp_cv_desc: "End-to-end custom development for complex enterprise requirements, transforming internal processes with highly secure private AI models."
+            },
+            zh: {
+                hero_title: "重塑商业体验，<br>大模型驱动。", hero_desc: "海纳智联依托前沿大语言模型技术，为您打造下一代商业级智能解决方案。",
+                exp_ml: "AI 应用与小程序商业开发", exp_ml_desc: "深度集成大模型能力，海纳智联为您打造具备原生智能对话、精准推荐的商业级移动 App 与微信小程序体验。",
+                exp_nlp: "文生内容引擎定制打包", exp_nlp_desc: "基于您的行业知识库与业务流，专属定制并打包部署开箱即用的内容生成引擎。",
+                exp_cv: "企业级需求定制开发", exp_cv_desc: "深入复杂的业务场景，提供从需求分析、架构设计到私有化模型部署的端到端定制服务。"
+            }
+        };
+        let currentLang = 'en';
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'zh' : 'en';
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if(translations[currentLang][key]) el.innerHTML = translations[currentLang][key];
+            });
+        }
+    </script>
+</body>
+</html>
