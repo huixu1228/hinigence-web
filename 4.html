@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hinigence | AI Development</title>
+    <style>
+        /* 基础重置 & CSS 变量 */
+        :root {
+            --bg-color: #050511;
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --primary-glow: #3b82f6;
+            --secondary-glow: #8b5cf6;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); overflow-x: hidden; line-height: 1.6; }
+
+        /* 动态背景 */
+        #network-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.6; }
+
+        /* 导航栏 */
+        nav {
+            position: fixed; width: 100%; padding: 20px 5%; display: flex; justify-content: space-between; align-items: center;
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); background: rgba(5, 5, 17, 0.7); z-index: 100;
+            border-bottom: 1px solid var(--card-border); transition: all 0.3s ease;
+        }
+        .logo { font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .logo-icon { width: 30px; height: 30px; background: linear-gradient(135deg, var(--primary-glow), var(--secondary-glow)); border-radius: 50%; }
+        .nav-links { display: flex; align-items: center; gap: 25px; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; font-weight: 500; transition: color 0.3s; }
+        .nav-links a:hover { color: var(--text-main); }
+        
+        /* 按钮样式 */
+        .btn-primary { background: linear-gradient(90deg, #3b82f6, #8b5cf6); color: white; border: none; padding: 10px 24px; border-radius: 30px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(139, 92, 246, 0.4); }
+        .btn-outline { background: transparent; color: white; border: 1px solid rgba(255,255,255,0.3); padding: 10px 24px; border-radius: 30px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: white; }
+        
+        /* 语言切换按钮 */
+        .lang-switch { background: transparent; color: var(--text-muted); border: 1px solid var(--card-border); padding: 6px 16px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s; display: flex; align-items: center; gap: 8px; }
+        .lang-switch:hover { color: white; border-color: white; background: rgba(255,255,255,0.05); }
+
+        /* 通用 Section 样式 */
+        section { padding: 100px 5%; max-width: 1200px; margin: 0 auto; }
+        .section-title { text-align: center; font-size: 2.5rem; margin-bottom: 20px; background: linear-gradient(to right, #fff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .section-subtitle { text-align: center; color: var(--text-muted); margin-bottom: 60px; font-size: 1.1rem; }
+
+        /* 英雄区域 */
+        .hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 20px; }
+        .hero h1 { font-size: 4.5rem; font-weight: 800; margin-bottom: 20px; line-height: 1.1; background: linear-gradient(to right, #ffffff, #a5b4fc, #c4b5fd); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 1.2rem; color: var(--text-muted); max-width: 600px; margin-bottom: 40px; }
+        .hero-buttons { display: flex; gap: 20px; }
+
+        /* 网格卡片 (Expertise & Products) */
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 40px 30px; backdrop-filter: blur(10px); transition: all 0.4s; position: relative; overflow: hidden; }
+        .card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%); opacity: 0; transition: opacity 0.5s; pointer-events: none; }
+        .card:hover { transform: translateY(-10px); border-color: rgba(139, 92, 246, 0.5); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); }
+        .card:hover::before { opacity: 1; }
+        .card h3 { font-size: 1.5rem; margin-bottom: 15px; color: #e2e8f0; }
+        .card p { color: var(--text-muted); font-size: 0.95rem; }
+        .card-icon { font-size: 2.5rem; margin-bottom: 20px; display: inline-block; }
+
+        /* 案例展示 (Case Studies) */
+        .case-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 40px; }
+        .case-card { border-radius: 20px; overflow: hidden; border: 1px solid var(--card-border); background: var(--card-bg); transition: transform 0.3s; }
+        .case-card:hover { transform: scale(1.02); border-color: var(--primary-glow); }
+        .case-image { height: 200px; background: linear-gradient(45deg, #1e1e2f, #2a2a40); display: flex; align-items: center; justify-content: center; font-size: 2rem; color: rgba(255,255,255,0.2); }
+        .case-content { padding: 30px; }
+        .case-tag { display: inline-block; padding: 4px 12px; background: rgba(59, 130, 246, 0.2); color: #60a5fa; border-radius: 20px; font-size: 0.8rem; margin-bottom: 15px; }
+
+        /* 页脚 */
+        footer { border-top: 1px solid var(--card-border); padding: 60px 5% 30px; margin-top: 50px; background: rgba(5, 5, 17, 0.8); }
+        .footer-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 40px; }
+        .footer-col h4 { color: white; margin-bottom: 20px; }
+        .footer-col a { display: block; color: var(--text-muted); text-decoration: none; margin-bottom: 10px; transition: color 0.3s; }
+        .footer-col a:hover { color: var(--primary-glow); }
+        .copyright { text-align: center; color: var(--text-muted); margin-top: 60px; font-size: 0.9rem; padding-top: 20px; border-top: 1px solid var(--card-border); }
+
+        /* 动画 */
+        .fade-in-up { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease-out, transform 0.8s ease-out; }
+        .fade-in-up.visible { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .hero h1 { font-size: 3rem; }
+            .case-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="network-canvas"></canvas>
+
+    <nav>
+        <div class="logo">
+            <span class="logo-icon"></span>
+            hinigence
+        </div>
+        <div class="nav-links">
+            <a href="#services" data-i18n="nav_services">Services</a>
+            <a href="#products" data-i18n="nav_products">Products</a>
+            <a href="#cases" data-i18n="nav_cases">Case Studies</a>
+            <button class="lang-switch" onclick="toggleLanguage()">
+                🌐 <span id="current-lang">中 / EN</span>
+            </button>
+            <a href="#" class="btn-primary" data-i18n="nav_start">Get Started</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <h1 class="fade-in-up" data-i18n="hero_title">Building Intelligence.<br>For Tomorrow.</h1>
+        <p class="fade-in-up" style="transition-delay: 0.2s;" data-i18n="hero_desc">
+            hinigence empowers global businesses with cutting-edge AI solutions, turning complex data into an actionable future.
+        </p>
+        <div class="hero-buttons fade-in-up" style="transition-delay: 0.4s;">
+            <button class="btn-primary" data-i18n="btn_explore">Explore Solutions</button>
+            <button class="btn-outline" data-i18n="btn_contact">Contact Sales</button>
+        </div>
+    </header>
+
+    <section id="services">
+        <h2 class="section-title fade-in-up" data-i18n="exp_title">Our Expertise</h2>
+        <p class="section-subtitle fade-in-up" data-i18n="exp_subtitle">Core technologies driving your digital transformation.</p>
+        <div class="cards-grid">
+            <div class="card fade-in-up" style="transition-delay: 0.1s;">
+                <div class="card-icon">🧠</div>
+                <h3 data-i18n="exp_ml">Machine Learning</h3>
+                <p data-i18n="exp_ml_desc">Build scalable predictive models and algorithms that learn from your data to automate and optimize decision-making processes.</p>
+            </div>
+            <div class="card fade-in-up" style="transition-delay: 0.2s;">
+                <div class="card-icon">💬</div>
+                <h3 data-i18n="exp_nlp">Natural Language</h3>
+                <p data-i18n="exp_nlp_desc">Advanced NLP models that understand, interpret, and generate human language to power next-gen conversational AI.</p>
+            </div>
+            <div class="card fade-in-up" style="transition-delay: 0.3s;">
+                <div class="card-icon">👁️</div>
+                <h3 data-i18n="exp_cv">Computer Vision</h3>
+                <p data-i18n="exp_cv_desc">Extract meaningful information from digital images and videos, enabling visual intelligence for enterprise applications.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="products">
+        <h2 class="section-title fade-in-up" data-i18n="prod_title">Flagship Products</h2>
+        <p class="section-subtitle fade-in-up" data-i18n="prod_subtitle">Enterprise-ready AI infrastructure built for scale.</p>
+        <div class="cards-grid">
+            <div class="card fade-in-up" style="transition-delay: 0.1s;">
+                <div class="card-icon">⚡</div>
+                <h3 data-i18n="prod_1">Hinigence Core</h3>
+                <p data-i18n="prod_1_desc">A unified platform for deploying, monitoring, and scaling large language models in private cloud environments.</p>
+            </div>
+            <div class="card fade-in-up" style="transition-delay: 0.2s;">
+                <div class="card-icon">🛡️</div>
+                <h3 data-i18n="prod_2">VisionPro API</h3>
+                <p data-i18n="prod_2_desc">Real-time video analytics API with ultra-low latency, designed for industrial automation and security.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="cases">
+        <h2 class="section-title fade-in-up" data-i18n="case_title">Case Studies</h2>
+        <p class="section-subtitle fade-in-up" data-i18n="case_subtitle">See how we create value for industry leaders.</p>
+        <div class="case-grid">
+            <div class="case-card fade-in-up" style="transition-delay: 0.1s;">
+                <div class="case-image">Robotics & IoT</div>
+                <div class="case-content">
+                    <span class="case-tag" data-i18n="case_tag_1">Manufacturing</span>
+                    <h3 style="margin-bottom: 10px;" data-i18n="case_1">Smart Defect Detection</h3>
+                    <p style="color: var(--text-muted);" data-i18n="case_1_desc">Implemented a computer vision system that reduced production line defect rates by 99.4%, saving $2M annually.</p>
+                </div>
+            </div>
+            <div class="case-card fade-in-up" style="transition-delay: 0.2s;">
+                <div class="case-image">Data Analytics</div>
+                <div class="case-content">
+                    <span class="case-tag" data-i18n="case_tag_2">Finance</span>
+                    <h3 style="margin-bottom: 10px;" data-i18n="case_2">Next-Gen Risk Control</h3>
+                    <p style="color: var(--text-muted);" data-i18n="case_2_desc">Deployed custom ML models to analyze real-time transaction streams, preventing fraud with millisecond response times.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-col">
+                <div class="logo" style="margin-bottom: 20px;">
+                    <span class="logo-icon"></span> hinigence
+                </div>
+                <p style="color: var(--text-muted); max-width: 300px;" data-i18n="footer_desc">Pioneering the future of artificial intelligence for enterprises worldwide.</p>
+            </div>
+            <div class="footer-col">
+                <h4 data-i18n="footer_platform">Platform</h4>
+                <a href="#" data-i18n="prod_1">Hinigence Core</a>
+                <a href="#" data-i18n="prod_2">VisionPro API</a>
+                <a href="#">Pricing</a>
+            </div>
+            <div class="footer-col">
+                <h4 data-i18n="footer_company">Company</h4>
+                <a href="#" data-i18n="nav_cases">About Us</a>
+                <a href="#">Careers</a>
+                <a href="#">Contact</a>
+            </div>
+        </div>
+        <div class="copyright">
+            &copy; 2026 Hinigence AI. All rights reserved.
+        </div>
+    </footer>
+
+    <script>
+        /* --- 1. 国际化 (i18n) 字典 --- */
+        const translations = {
+            en: {
+                nav_services: "Services", nav_products: "Products", nav_cases: "Case Studies", nav_start: "Get Started",
+                hero_title: "Building Intelligence.<br>For Tomorrow.",
+                hero_desc: "hinigence empowers global businesses with cutting-edge AI solutions, turning complex data into an actionable future.",
+                btn_explore: "Explore Solutions", btn_contact: "Contact Sales",
+                exp_title: "Our Expertise", exp_subtitle: "Core technologies driving your digital transformation.",
+                exp_ml: "Machine Learning", exp_ml_desc: "Build scalable predictive models and algorithms that learn from your data to automate and optimize decision-making processes.",
+                exp_nlp: "Natural Language", exp_nlp_desc: "Advanced NLP models that understand, interpret, and generate human language to power next-gen conversational AI.",
+                exp_cv: "Computer Vision", exp_cv_desc: "Extract meaningful information from digital images and videos, enabling visual intelligence for enterprise applications.",
+                prod_title: "Flagship Products", prod_subtitle: "Enterprise-ready AI infrastructure built for scale.",
+                prod_1: "Hinigence Core", prod_1_desc: "A unified platform for deploying, monitoring, and scaling large language models in private cloud environments.",
+                prod_2: "VisionPro API", prod_2_desc: "Real-time video analytics API with ultra-low latency, designed for industrial automation and security.",
+                case_title: "Case Studies", case_subtitle: "See how we create value for industry leaders.",
+                case_tag_1: "Manufacturing", case_1: "Smart Defect Detection", case_1_desc: "Implemented a computer vision system that reduced production line defect rates by 99.4%, saving $2M annually.",
+                case_tag_2: "Finance", case_2: "Next-Gen Risk Control", case_2_desc: "Deployed custom ML models to analyze real-time transaction streams, preventing fraud with millisecond response times.",
+                footer_desc: "Pioneering the future of artificial intelligence for enterprises worldwide.",
+                footer_platform: "Platform", footer_company: "Company"
+            },
+            zh: {
+                nav_services: "核心服务", nav_products: "产品矩阵", nav_cases: "客户案例", nav_start: "开始使用",
+                hero_title: "构筑智能，<br>面向未来。",
+                hero_desc: "hinigence 致力于为全球企业提供尖端的 AI 解决方案，将复杂的数据转化为驱动未来的核心生产力。",
+                btn_explore: "探索解决方案", btn_contact: "联系商务",
+                exp_title: "核心技术", exp_subtitle: "驱动企业数字化转型的底层引擎。",
+                exp_ml: "机器学习", exp_ml_desc: "构建可扩展的预测模型和算法，让机器从数据中学习，自动化并优化商业决策流程。",
+                exp_nlp: "自然语言处理", exp_nlp_desc: "先进的 NLP 大模型技术，能够精准理解、解释并生成人类语言，赋能下一代对话式 AI。",
+                exp_cv: "计算机视觉", exp_cv_desc: "从海量图像和视频流中提取关键信息，为工业安防和智能制造提供视觉智能支持。",
+                prod_title: "旗舰产品", prod_subtitle: "为企业级规模打造的 AI 基础设施。",
+                prod_1: "Hinigence Core (核心引擎)", prod_1_desc: "企业级统一化平台，专为在私有云环境中部署、监控和扩展大型语言模型而设计。",
+                prod_2: "VisionPro API (视觉增强)", prod_2_desc: "具备超低延迟的实时视频分析 API，专为复杂的工业自动化和高级别安防系统打造。",
+                case_title: "客户案例", case_subtitle: "了解我们如何为行业领导者创造实际价值。",
+                case_tag_1: "智能制造", case_1: "AI 智能缺陷检测系统", case_1_desc: "部署了定制化计算机视觉系统，将生产线缺陷漏检率降低了 99.4%，每年节省成本超两百万美元。",
+                case_tag_2: "金融科技", case_2: "下一代实时风控引擎", case_2_desc: "部署定制的机器学习模型分析实时交易流，以毫秒级响应速度精准拦截金融欺诈行为。",
+                footer_desc: "致力于成为全球企业人工智能未来的开拓者与领航人。",
+                footer_platform: "平台产品", footer_company: "关于公司"
+            }
+        };
+
+        let currentLang = 'en';
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'zh' : 'en';
+            document.documentElement.lang = currentLang === 'en' ? 'en' : 'zh-CN';
+            
+            // 更新页面所有带有 data-i18n 属性的元素
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.innerHTML = translations[currentLang][key];
+                }
+            });
+            
+            // 按钮提示文字切换
+            document.getElementById('current-lang').textContent = currentLang === 'en' ? '中 / EN' : 'EN / 中';
+        }
+
+        /* --- 2. 滚动动画 (Intersection Observer) --- */
+        const observer = new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    obs.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
+
+        /* --- 3. 导航栏背景模糊增强 --- */
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 50) {
+                nav.style.background = 'rgba(5, 5, 17, 0.9)';
+                nav.style.boxShadow = '0 4px 30px rgba(0, 0, 0, 0.1)';
+            } else {
+                nav.style.background = 'rgba(5, 5, 17, 0.7)';
+                nav.style.boxShadow = 'none';
+            }
+        });
+
+        /* --- 4. 粒子网络背景动画 --- */
+        const canvas = document.getElementById('network-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles = [];
+        
+        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width; this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.5; this.vy = (Math.random() - 0.5) * 0.5;
+                this.radius = Math.random() * 2 + 1;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < 0 || this.x > width) this.vx *= -1;
+                if (this.y < 0 || this.y > height) this.vy *= -1;
+            }
+            draw() {
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(139, 92, 246, 0.5)'; ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            const particleCount = Math.floor((width * height) / 15000);
+            for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+        }
+        initParticles();
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update(); particles[i].draw();
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x; const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < 120) {
+                        ctx.beginPath(); ctx.strokeStyle = `rgba(139, 92, 246, ${1 - distance / 120})`;
+                        ctx.lineWidth = 0.5; ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>
